@@ -1,0 +1,911 @@
+---
+title: "Capstone Project - Draft23"
+author: "Lily M"
+output: word_document
+---
+
+```{r, include=FALSE, echo=FALSE, results='hide'}
+options(device="quartz")
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+library(rmarkdown)
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(tidyr)
+require(mosaic)
+require(oilabs)
+library(knitr)
+library(rJava)
+library(xlsxjars)
+library(reshape2)
+#library(xlsx)
+options(stringsAsFactors=FALSE)
+setwd('/Users/Xyz27/Documents/Rcode')
+
+```
+
+```{r, echo=F, results='hide'}
+### FOUNDATION CODE:
+## Datasets needed:
+# Silicon Valley zipcodes
+# Candidates in each cycle - party affiliation
+# Contributions for each zipcode - individual files, put together
+
+## Silicon Valley Zip Codes
+sv<-read_excel("siliconvalley-zip.xlsx")
+sv<-sv[,1:2]
+
+## Candidates in each cycle
+cand<-read_excel("cand08,12,16.xlsx")
+cand<-cand[!is.na(cand$candidate),]
+
+## Candidate parties:
+candparty<-read_excel("candPARTY.xlsx")
+
+## ZIPCODE DATASETS:
+# Campbell - 95008
+campbell08<-read.csv("2008 - 95008text.csv")
+campbell12<-read.csv("2012 - 95008text.csv")
+campbell16<-read.csv("2016 - 95008text.csv")
+
+# Cupertino - 95014
+cupertino08<-read.csv("2008 - 95014.csv")
+cupertino12<-read.csv("2012 - 95014.csv")
+cupertino16<-read.csv("2016 - 95014.csv")
+
+# Gilroy - 95020
+gilroy08<-read.csv("95020 - 2008.csv")
+gilroy12<-read.csv("95020 - 2012.csv")
+gilroy16<-read.csv("95020 - 2016.csv")
+
+# Los Altos - 94022
+losaltos08<-read.csv("94022 - 2008.csv")
+losaltos12<-read.csv("94022 - 2012.csv")
+losaltos16<-read.csv("94022 - 2016.csv")
+
+# Los Altos Hills - 94024
+losaltoshills08<-read.csv("94024 - 2008.csv")
+losaltoshills12<-read.csv("94024 - 2012.csv")
+losaltoshills16<-read.csv("94024 - 2016.csv")
+
+# Los Gatos - 95030
+losgatos08<-read.csv("95030 - 2008.csv")
+losgatos12<-read.csv("95030 - 2012.csv")
+losgatos16<-read.csv("95030 - 2016.csv")
+
+# Los Gatos - 95032
+also_losgatos08<-read.csv("95032 - 2008.csv")
+also_losgatos12<-read.csv("95032 - 2012.csv")
+also_losgatos16<-read.csv("95032 - 2016.csv")
+
+# Los Gatos Mountains - 95033
+losgatosmtns08<-read.csv("95033 - 2008.csv")
+losgatosmtns12<-read.csv("95033 - 2012.csv")
+losgatosmtns16<-read.csv("95033 - 2016.csv")
+
+# Militipas - 95035
+milipitas08<-read.csv("95035 - 2008.csv")
+milipitas12<-read.csv("95035 - 2012.csv")
+milipitas16<-read.csv("95035 - 2016.csv")
+
+# Morgan Hill - 95037
+morganhill08<-read.csv("95037 - 2008.csv")
+morganhill12<-read.csv("95037 - 2012.csv")
+morganhill16<-read.csv("95037 - 2016.csv")
+
+# Mountain View - 94040
+mv08<-read.csv("94040 - 2008.csv")
+mv12<-read.csv("94040 - 2012.csv")
+mv16<-read.csv("94040 - 2016.csv")
+
+# Mountain View2 - 94041
+mv2_08<-read.csv("94041 - 2008.csv")
+mv2_12<-read.csv("94041 - 2012.csv")
+mv2_16<-read.csv("94041 - 2016.csv")
+
+# Mountain View3 - 94043
+mv3_08<-read.csv("94043 - 2008.csv")
+mv3_12<-read.csv("94043 - 2012.csv")
+mv3_16<-read.csv("94043 - 2016.csv")
+
+# San Jose - all 28 zipcodes
+# 2008
+san_jose<-read.csv("transactions_SJ(08).csv")
+unique(san_jose$contbr_zip)
+
+for (i in 1:length(san_jose$contbr_zip)){
+  san_jose$sanjose[i]<-ifelse(san_jose$contbr_zip[i] %in% unique(sv$Zipcode), 1,0)
+}
+
+sj_08<-san_jose[san_jose$sanjose==1,]
+sj_08$sanjose<-NULL
+
+# 2012:
+san_jose<-read.csv("transactions_SJ(12).csv")
+unique(san_jose$contbr_zip)
+
+for (i in 1:length(san_jose$contbr_zip)){
+  san_jose$sanjose[i]<-ifelse(san_jose$contbr_zip[i] %in% unique(sv$Zipcode), 1,0)
+}
+
+sj_12<-san_jose[san_jose$sanjose==1,]
+sj_12$sanjose<-NULL
+
+# 2016:
+san_jose<-read.csv("transactions_SJ(16).csv")
+
+for (i in 1:length(san_jose$contbr_zip)){
+  san_jose$sanjose[i]<-ifelse(san_jose$contbr_zip[i] %in% unique(sv$Zipcode), 1,0)
+}
+
+sj_16<-san_jose[san_jose$sanjose==1,]
+sj_16$sanjose<-NULL
+
+# San Martin - 95046
+sm08<-read.csv("95046 - 2008.csv")
+sm12<-read.csv("95046 - 2012.csv")
+sm16<-read.csv("95046 - 2016.csv")
+
+# Santa Clara - 95050
+sc1_08<-read.csv("95050 - 2008.csv")
+sc1_12<-read.csv("95050 - 2012.csv")
+sc1_16<-read.csv("95050 - 2016.csv")
+
+# Santa Clara - 95051
+sc2_08<-read.csv("95051 - 2008.csv")
+sc2_12<-read.csv("95051 - 2012.csv")
+sc2_16<-read.csv("95051 - 2016.csv")
+
+# Santa Clara - 95054
+sc3_08<-read.csv("95054 - 2008.csv")
+sc3_12<-read.csv("95054 - 2012.csv")
+sc3_16<-read.csv("95054 - 2016.csv")
+
+# Saratoga - 95070
+saratoga08<-read.csv("95070 - 2008.csv")
+saratoga12<-read.csv("95070 - 2012.csv")
+saratoga16<-read.csv("95070 - 2016.csv")
+
+# Sunnyvale1 - 94085, 94086, 94087, 94088, 94089
+sv08<-read.csv("sunnyvale08.csv")
+sv12<-read.csv("sunnyvale12.csv")
+sv16<-read.csv("sunnyvale16.csv")
+
+# Palo Alto 1 - 94301
+pa1_08<-read.csv("94301 - 2008.csv")
+pa1_12<-read.csv("94301 - 2012.csv")
+pa1_16<-read.csv("94301 - 2016.csv")
+
+# Palo Alto 2 - 94302
+pa2_08<-read.csv("94302 - 2008.csv")
+pa2_12<-read.csv("94302 - 2012.csv")
+pa2_16<-read.csv("94302 - 2016.csv")
+
+# Palo Alto 3 - 94303
+pa3_08<-read.csv("94303 - 2008.csv")
+pa3_12<-read.csv("94303 - 2012.csv")
+pa3_16<-read.csv("94303 - 2016.csv")
+
+# Palo Alto 4 - 94304
+pa4_08<-read.csv("94304 - 2008.csv")
+pa4_12<-read.csv("94304 - 2012.csv")
+pa4_16<-read.csv("94304 - 2016.csv")
+
+# Palo Alto 6 - 94306
+pa5_08<-read.csv("94306 - 2008.csv")
+pa5_12<-read.csv("94306 - 2012.csv")
+pa5_16<-read.csv("94306 - 2016.csv")
+
+# Stanford - 94305
+stanford08<-read.csv("stanford08.csv")
+stanford12<-read.csv("stanford12.csv")
+stanford16<-read.csv("stanford16.csv")
+
+# Belmont - 94002
+belmont08<-read.csv("94002 - 2008.csv")
+belmont12<-read.csv("94002 - 2012.csv")
+belmont16<-read.csv("94002 - 2016.csv")
+
+# Burlingame 1/ Hillsborough - 94010
+burlingame1_08<-read.csv("94010 - 2008.csv")
+burlingame1_12<-read.csv("94010 - 2012.csv")
+burlingame1_16<-read.csv("94010 - 2016.csv")
+
+# Burlingame 2 - 94011
+burlingame2_08<-read.csv("94011 - 2008.csv")
+burlingame2_12<-read.csv("94011 - 2012.csv")
+burlingame2_16<-read.csv("94011 - 2016.csv")
+
+# Foster City - 94404
+fc08<-read.csv("94404 - 2008.csv")
+fc12<-read.csv("94404 - 2012.csv")
+fc16<-read.csv("94404 - 2016.csv")
+
+# Menlo Park 1 - 94025
+mp1_08<-read.csv("94025 - 2008.csv")
+mp1_12<-read.csv("94025 - 2012.csv")
+mp1_16<-read.csv("94025 - 2016.csv")
+
+# Menlo Park 2 - 94026
+mp2_08<-read.csv("94026 - 2008.csv")
+mp2_12<-read.csv("94026 - 2012.csv")
+mp2_16<-read.csv("94026 - 2016.csv")
+
+# Menlo Park 3 - 94027
+mp3_08<-read.csv("94027 - 2008.csv")
+mp3_12<-read.csv("94027 - 2012.csv")
+mp3_16<-read.csv("94027 - 2016.csv")
+
+# Portola Valley - 94028
+pv08<-read.csv("94028 - 2008.csv")
+pv12<-read.csv("94028 - 2012.csv")
+pv16<-read.csv("94028 - 2016.csv")
+
+# Redwood City 1/Woodside - 94061
+rc1_08<-read.csv("94061 - 2008.csv")
+rc1_12<-read.csv("94061 - 2012.csv")
+rc1_16<-read.csv("94061 - 2016.csv")
+
+# Redwood City 2/Woodside - 94062
+rc2_08<-read.csv("94062 - 2008.csv")
+rc2_12<-read.csv("94062 - 2012.csv")
+rc2_16<-read.csv("94062 - 2016.csv")
+
+# Redwood City 3 - 94063
+rc3_08<-read.csv("94063 - 2008.csv")
+rc3_12<-read.csv("94063 - 2012.csv")
+rc3_16<-read.csv("94063 - 2016.csv")
+
+# Redwood City 4 - 94064
+rc4_08<-read.csv("94064 - 2008.csv")
+rc4_12<-read.csv("94064 - 2012.csv")
+rc4_16<-read.csv("94064 - 2016.csv")
+
+# Redwood City 5 - 94065
+rc5_08<-read.csv("94065 - 2008.csv")
+rc5_12<-read.csv("94065 - 2012.csv")
+rc5_16<-read.csv("94065 - 2016.csv")
+
+# San Bruno - 94066
+sbruno08<-read.csv("94066 - 2008.csv")
+sbruno12<-read.csv("94066 - 2012.csv")
+sbruno16<-read.csv("94066 - 2016.csv")
+
+# San Carlos - 94070
+sancarlos08<-read.csv("94070 - 2008.csv")
+sancarlos12<-read.csv("94070 - 2012.csv")
+sancarlos16<-read.csv("94070 - 2016.csv")
+
+# San Mateo 1 - 94401
+sanmateo1_08<-read.csv("94401 - 2008.csv")
+sanmateo1_12<-read.csv("94401 - 2012.csv")
+sanmateo1_16<-read.csv("94401 - 2016.csv")
+
+# San Mateo 2 - 94402
+sanmateo2_08<-read.csv("94402 - 2008.csv")
+sanmateo2_12<-read.csv("94402 - 2012.csv")
+sanmateo2_16<-read.csv("94402 - 2016.csv")
+
+# San Mateo 3 - 94403
+sanmateo3_08<-read.csv("94403 - 2008.csv")
+sanmateo3_12<-read.csv("94403 - 2012.csv")
+sanmateo3_16<-read.csv("94403 - 2016.csv")
+
+# San Mateo 4 - 94404
+sanmateo4_08<-read.csv("94404 - 2008.csv")
+sanmateo4_12<-read.csv("94404 - 2012.csv")
+sanmateo4_16<-read.csv("94404 - 2016.csv")
+
+# Bind the files together, to create one dataset.
+fullset<-bind_rows(campbell08, campbell12, campbell16, cupertino08, cupertino12, cupertino16, gilroy08, gilroy12, gilroy16, losaltos08, losaltos12, losaltos16, losaltoshills08, losaltoshills12, losaltoshills16, losgatos08, losgatos12, losgatos16, also_losgatos08, also_losgatos12, also_losgatos16, losgatosmtns08, losgatosmtns12, losgatosmtns16, milipitas08, milipitas12, milipitas16, morganhill08, morganhill12, morganhill16, mv08, mv12, mv16, mv2_08, mv2_12, mv2_16, mv3_08, mv3_12, mv3_16, sj_08, sj_12, sj_16, sm08, sm12, sm16, sc1_08, sc1_12, sc1_16, sc2_08, sc2_12, sc2_16, sc3_08, sc3_12, sc3_16, saratoga08, saratoga12, saratoga16, sv08, sv12, sv16, pa1_08, pa1_12, pa1_16, pa2_08, pa2_12, pa2_16, pa3_08, pa3_12, pa3_16, pa4_08, pa4_12, pa4_16, pa5_08, pa5_12, pa5_16, stanford08, stanford12, stanford16, belmont08, belmont12, belmont16, burlingame1_08, burlingame1_12, burlingame1_16, burlingame2_08, burlingame2_12, burlingame2_16, fc08, fc12, fc16, mp1_08, mp1_12, mp1_16, mp2_08, mp2_12, mp2_16, mp3_08, mp3_12, mp3_16, pv08, pv12, pv16, rc1_08, rc1_12, rc1_16, rc2_08, rc2_12, rc2_16, rc3_08, rc3_12, rc3_16, rc4_08, rc4_12, rc4_16, rc5_08, rc5_12, rc5_16, sbruno08, sbruno12, sbruno16, sancarlos08, sancarlos12, sancarlos16, sanmateo1_08, sanmateo1_12, sanmateo1_16, sanmateo2_08, sanmateo2_12, sanmateo2_16, sanmateo3_08, sanmateo3_12, sanmateo3_16,  sanmateo4_08, sanmateo4_12, sanmateo4_16)
+
+#### DATA CLEANING:
+# Create day/month/year columns from the contb_receipt_dt column
+fullset$date<-fullset$contb_receipt_dt
+fullset<- separate(fullset, contb_receipt_dt, c("month", "day", "year"), sep="/")
+#Convert year column to full year
+fullset$year<-paste("20",fullset$year, sep="")
+#Convert the new date columns to class numeric:
+fullset$year<-as.numeric(fullset$year)
+fullset$month<-as.numeric(fullset$month)
+fullset$day<-as.numeric(fullset$day)
+
+#In order to merge the dataset on primary information with the zipcode-level contribution #dataset, we need to edit the names of the candidates appearing in the zipcode-level dataset #to match those in the former. 
+
+# Name editing for 'fullset':
+fullset$cand_nm_title[fullset$cand_nm_title=="Hillary Rodham Clinton"]<-"Hillary Clinton"
+fullset$cand_nm_title[fullset$cand_nm_title=="John Edwards"]<-"John Edwards"
+fullset$cand_nm_title[fullset$cand_nm_title=="Barack Obama"]<-"Barack Obama"
+fullset$cand_nm_title[fullset$cand_nm_title=="John S McCain"]<-"John McCain"
+fullset$cand_nm_title[fullset$cand_nm_title=="Fred Dalton Thompson"]<-"Fred Thompson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Dennis J Kucinich"]<-"Dennis Kucinich"
+fullset$cand_nm_title[fullset$cand_nm_title=="Rudolph W Giuliani"]<-"Rudy Giuliani"
+fullset$cand_nm_title[fullset$cand_nm_title=="Christopher J Dodd"]<-"Christopher Dodd"
+fullset$cand_nm_title[fullset$cand_nm_title=="Rick Perry"]<-"Rick Perry"
+fullset$cand_nm_title[fullset$cand_nm_title=="Michele Bachmann"]<-"Michele Bachmann"
+fullset$cand_nm_title[fullset$cand_nm_title=="Herman Cain"]<-"Herman Cain"
+fullset$cand_nm_title[fullset$cand_nm_title=="Bernard Sanders"]<-"Bernie Sanders"
+fullset$cand_nm_title[fullset$cand_nm_title=="Benjamin S. Carson"]<-"Ben Carson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Rafael Edward 'Ted' Cruz"]<-"Ted Cruz"
+fullset$cand_nm_title[fullset$cand_nm_title=="Scott Walker"]<-"Scott Walker"
+fullset$cand_nm_title[fullset$cand_nm_title=="Rand Paul"]<-"Rand Paul"
+fullset$cand_nm_title[fullset$cand_nm_title=="Jeb Bush"]<-"Jeb Bush"
+fullset$cand_nm_title[fullset$cand_nm_title=="John R. Kasich"]<-"John Kasich"
+fullset$cand_nm_title[fullset$cand_nm_title=="Carly Fiorina"]<-"Carly Fiorina"
+fullset$cand_nm_title[fullset$cand_nm_title=="Marco Rubio"]<-"Marco Rubio"
+fullset$cand_nm_title[fullset$cand_nm_title=="Samuel Dale Brownback"]<-"Sam Brownback"
+fullset$cand_nm_title[fullset$cand_nm_title=="Joseph R Jr Biden"]<-"Joe Biden"
+fullset$cand_nm_title[fullset$cand_nm_title=="Donald J. Trump"]<-"Donald Trump"
+fullset$cand_nm_title[fullset$cand_nm_title=="Thomas Gerald Tancredo"]<-"Tom Tancredo"
+fullset$cand_nm_title[fullset$cand_nm_title=="Timothy Pawlenty"]<-"Timothy Pawlenty"
+fullset$cand_nm_title[fullset$cand_nm_title=="Jon Huntsman"]<-"Jon Huntsman"
+fullset$cand_nm_title[fullset$cand_nm_title=="James Henry Jr. Webb"]<-"James Henry Jr. Webb"
+fullset$cand_nm_title[fullset$cand_nm_title=="Christopher J. Christie"]<-"Christopher J. Christie"
+fullset$cand_nm_title[fullset$cand_nm_title=="Lawrence Lessig"]<-"Lawrence Lessig"
+fullset$cand_nm_title[fullset$cand_nm_title=="Lindsey O. Graham"]<-"Lindsey O. Graham"
+fullset$cand_nm_title[fullset$cand_nm_title=="James R. (Rick) Perry"]<-"James R. (Rick) Perry"
+fullset$cand_nm_title[fullset$cand_nm_title=="Lindsey O. Graham"]<-"Lindsey O. Graham"
+fullset$cand_nm_title[fullset$cand_nm_title=="Martin Joseph O'Malley"]<-"Martin Joseph O'Malley"
+fullset$cand_nm_title[fullset$cand_nm_title=="Tommy G Thompson"]<-"Tommy G Thompson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Richard J. Santorum"]<-"Rick Santorum"
+fullset$cand_nm_title[fullset$cand_nm_title=="Ron Paul"]<-"Ron Paul"
+fullset$cand_nm_title[fullset$cand_nm_title=="Bill Richardson"]<-"Bill Richardson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Mike Huckabee"]<-"Mike Huckabee"
+fullset$cand_nm_title[fullset$cand_nm_title=="Mitt Romney"]<-"Mitt Romney"
+fullset$cand_nm_title[fullset$cand_nm_title=="Newt Gingrich"]<-"Newt Gingrich"
+fullset$cand_nm_title[fullset$cand_nm_title=="Mike Gravel"]<-"Mike Gravel"
+fullset$cand_nm_title[fullset$cand_nm_title=="Duncan Hunter"]<-"Duncan Hunter"
+fullset$cand_nm_title[fullset$cand_nm_title=="Dennis J Kucinich"]<-"Dennis Kucinich"
+fullset$cand_nm_title[fullset$cand_nm_title=="Gary Earl Johnson"]<-"Gary Johnson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Jill Stein"]<-"Jill Stein"
+fullset$cand_nm_title[fullset$cand_nm_title=="Charles E. 'Buddy' III Roemer"]<-"Buddy Roemer"
+fullset$cand_nm_title[fullset$cand_nm_title=="George E. Pataki"]<-"George E. Pataki"
+fullset$cand_nm_title[fullset$cand_nm_title=="Gary Johnson"]<-"Gary Johnson"
+fullset$cand_nm_title[fullset$cand_nm_title=="Bobby Jindal"]<-"Bobby Jindal"
+
+# Now we need to distinguish the candidates who participated in the primary from those who didn't but received funding in the lead-up to it.  We begin by merging the contribution data for that specific place by the total list of candidates who participated in the primary.
+length(fullset$cand_nm_title) # 219,811
+
+# Rename the column 'cand_nm_title' in the zipcode-level dataset to 'candidate', in order to match the name in the primary-info dataset.
+names(fullset)[names(fullset)=="cand_nm_title"] <- "candidate"
+
+# Merge the two datasets:
+merge<-merge(fullset, candparty, by=c("candidate"), all.x=TRUE)
+length(merge$candidate) # 219,811
+length(unique(merge$candidate)) # 46
+
+# Remove duplicate entries created by merge:
+merge2<-merge[!duplicated(merge), ]
+length(merge2$candidate) # 201611
+length(unique(merge2$candidate)) #46
+
+# These entries are in the main dataset but NOT in cand_party dataset, because they received funding but did not participate in the primary:
+nonmatches <- subset(fullset, !(fullset$candidate %in% candparty$candidate))
+unique(nonmatches$candidate)
+unique(fullset$candidate)
+# So we manually add party data for these candidates:
+merge2$cand_party[merge2$candidate=="Rick Perry"]<-"R"
+merge2$cand_party[merge2$candidate=="Michele Bachmann"]<-"R"
+merge2$cand_party[merge2$candidate=="Herman Cain"]<-"R"
+merge2$cand_party[merge2$candidate=="Scott Walker"]<-"R"
+merge2$cand_party[merge2$candidate=="Rand Paul"]<-"R"
+merge2$cand_party[merge2$candidate=="Jeb Bush"]<-"R"
+merge2$cand_party[merge2$candidate=="Carly Fiorina"]<-"R"
+merge2$cand_party[merge2$candidate=="Marco Rubio"]<-"R"
+merge2$cand_party[merge2$candidate=="Timothy Pawlenty"]<-"R"
+merge2$cand_party[merge2$candidate=="Jon Huntsman"]<-"R"
+merge2$cand_party[merge2$candidate=="James Henry Jr. Webb"]<-"D"
+merge2$cand_party[merge2$candidate=="Christopher J. Christie"]<-"R"
+merge2$cand_party[merge2$candidate=="Lawrence Lessig"]<-"D"
+merge2$cand_party[merge2$candidate=="Lindsey O. Graham"]<-"R"
+merge2$cand_party[merge2$candidate=="James R. (Rick) Perry"]<-"R"
+merge2$cand_party[merge2$candidate=="Martin Joseph O'Malley"]<-"D"
+merge2$cand_party[merge2$candidate=="Gary Johnson"]<-"L"
+merge2$cand_party[merge2$candidate=="Jill Stein"]<-"G"
+merge2$cand_party[merge2$candidate=="Buddy Roemer"]<-"R"
+merge2$cand_party[merge2$candidate=="James R. (Rick) Perry"]<-"R"
+merge2$cand_party[merge2$candidate=="Tommy G Thompson"]<-"R"
+merge2$cand_party[merge2$candidate=="George E. Pataki"]<-"R"
+merge2$cand_party[merge2$candidate=="Bobby Jindal"]<-"R"
+
+# Now we can create a variable identifying the election cycle. Exploring the data, we find that all contributions to a candidate for a given cycle X are given either the year of (X) or year, two years, or three years before (X-1, X-2, X-3) the cycle. So we can identify entries as belonging to the entry cycle as follows:
+table(merge2$year) # 2006 2007 2008 2011 2012 2013 2014 2015 2016
+#View(table(merge2$year))
+merge2$year_cycle[merge2$year=="2008" | merge2$year=="2007" | merge2$year=="2006"]<-2008
+merge2$year_cycle[merge2$year=="2012" | merge2$year=="2011"]<-2012
+merge2$year_cycle[merge2$year=="2016" | merge2$year=="2015" | merge2$year=="2014" | merge2$year=="2013"]<-2016
+
+write.csv(merge2, file='full_data.csv')
+
+```
+
+***INTRODUCTION***
+
+My project studies shifting political sentiment in Silicon Valley using data on individual contributions to presidential election campaigns in the 2008, 2012, and 2016 cycles. Historically, California is a "blue"" state; in the 2015-16 cycle to date, the Democratic party and candidates have raked in 58.4% of total contributions while the Republicans have received just 37.7%. But while Silicon Valley has leaned left in every presidential election going since 1984, data through the end of 2015 shows that contributions to Republicans from employees of several major tech firms (Cisco, Oracle, Yahoo, Intel) has so far outstripped money flowing to Democrats in the 2016 cycle. Indeed, while just 52 workers from the tech industry have contributed to Trump’s campaign specifically, analysis of past election cycles indicates Valley support for Republicans overall is not unsubstantial (http://www.bloomberg.com/politics/articles/2016-02-09/bush-rubio-lure-tech-geek-giving-googler-dollars-back-clinton) and may be growing.
+
+Articles on the volume (ibtimes.com) and breakdown of individual contributions abound in the popular press, but most examine presidential campaign funding in light of data from a single quarter or cycle. Silicon Valley is demographically dynamic and, by reputation, not very ideological, and fully understanding the opportunities for a specific political party means examining sentiment in recent historical context. This project serves as an initial analysis, with scope for deeper and more directed study down the road. 
+
+I look at data over the past three election cycles to extract overall and zipcode-specific trends. For the purposes of framing the research, my project takes as its client the California Republican Party. Faced with an uphill battle, leaders from the party focused on Silicon Valley want to improve fundraising efforts by directing marketing expenditures to those areas in which they have, on average over the past three presidential election cycles, sourced the lowest amounts of funding and for which funding declined in 2016 (to date) versus 2008.  I begin by testing several assumptions about the relative breakdown of contribution levels from Silicon Valley, and then compare 2016 giving to date with that during a similar time frame in the 2008 cycle. While the relative totals and frequency of contributions to Republicans between these two periods reveals several interesting observations itself, I also use it to identify zipcodes demanding promotional efforts by the Republican party.  Using the roughly equal periods in 2008 and 2016, I identify zipcodes for which funding to Republicans has declined the most across election cycles, both on absolute terms and as a share of total funding from the zipcode. Finally, I test several hypothesis behind the finding that while Republican contributions have remained roughly equivalent across the two periods, the frequency of contributions to Republican candidates has risen dramatically from 2008 to 2016.  
+
+***DATA***
+
+**Background**
+
+I use the FEC’s official data on presidential campaign contributions from a list of Silicon Valley zip codes for 2008, 2012, and 2016 election cycles. The data can be found by entering specific zip codes here: http://www.fec.gov/disclosurep/pnational.do#. I have identified 63 zip codes comprising the “Silicon Valley” area, summarized in the table on the Appendix. 
+
+Examining contributions from the full list of zipcodes reveals major discrepancies and patterns among the political sentiment and contribution volume of different zip codes.  Additionally, combining data from the individual zip codes provides a new dataset ripe for future analyses of Valley giving (most available datasets compile zipcode-level data for a specific election cycle, or a more narrow set of zipcodes). 
+
+**Cleaning & Wrangling**
+
+For each contribution, the FEC data provides information on the candidate name (cand_nm_title), contributor name (contbr_nm), contributor city (contbr_city), contributor state (contbr_st), contributor zip (contbr_zip), contributor employer (contbr_employer), transaction description (receipt_desc), contribution date (contb_receipt_dt), and amount given (contb_receipt_amt). To assign the contribution to a specific party, I created a separate file listing the candidates who ran in the Democratic and Republican primaries in CA in each election cycle, denoting party affiliation. Since the names of candidates in this separate file (with tables from Wikipedia articles on the primaries) did not always match the formatting of names provided through the FEC data, I make several edits to the cand_nm_title variable in the main dataset to ease the merge process.
+
+Initial analysis on several zip codes showed that in several cases, the contributions recorded were made to candidates that did not ultimately participate in the CA primary (e.g. Jeb Bush in 2016), so this list of primary participants does not capture the full set of recipients included in the dataset. Since this study does not distinguish between candidates that did participate in the primary from those who did not when examining party receipt totals, I manually code the party identification of those candidates missing from the primary file. The table in the Appendix summarizes the candidates receiving money from Silicon Valley in each election cycle, along with a note about whether each was ultimately a candidate in the primary. N.B. Candidates (e.g. Ted Cruz in the 2016 cycle) who had dropped out of the race but appeared on the CA ballot are denoted as in the primary.
+
+```{R, echo=FALSE}
+nonmatches <- subset(merge2, !(merge2$candidate %in% candparty$candidate))
+notinprimary<-data.frame(unique(nonmatches$candidate), "No")
+names(notinprimary)<-c("Candidate", "Primary?")
+inprimary<-data.frame(unique(candparty$candidate), "Yes")
+names(inprimary)<-c("Candidate", "Primary?")
+full_cand<-rbind(inprimary, notinprimary)
+```
+
+
+The FEC data shows dates in date form, so I extract year information to match years with specific election cycles.  The full dataset provides the following number of observations in each year. 
+```{R, echo=FALSE}
+year_table<-table(merge2$year)
+year_df<-as.data.frame(year_table)
+names(year_df)<-c("Year", "Observations")
+```
+I classify contributions given in 2006, 2007, and 2008 as part of the 2008 cycle, contributions from 2011 and 2012 as part of the 2012 cycle, and contributions from 2014, 2015, and 2016 as part of the 2015 cycle. The variable year_cycle is coded categorically to retain this information.
+
+An initial look at the contribution amounts variable produced some puzzling observations, because the individual contributions denoted are in some cases negative. Digging deeper into the source of these negative values, I conducted background research on the description (‘receipt_desc’) variable. The negative values relate to contribution limits (http://www.fec.gov/pages/brochures/contrib.shtml#Presumptive_Redesignations). Campaign treasurers must regularly check committee records to ensure successive contributions from one contributor remain within the limits. Many of the categories are ways to handle excessive contributions. While committees may deposit the excessive amount from a contribution, they must seek the contributor's *reattribution* of the portion to a joint contributor (e.g. reattribution from spouse, reattribution/redesignation requested) or the contributor's *redesignation* of the portion for a different election (redesignation from primary, redesignation to general) for which the contributor hasn't already exceeded limits. The "redesignation from" and "redesignation to” lines cancel each other out, so there is no need to remove these categories from the dataset: "REDESIGNATION TO", "REATTRIBUTION/REDESIGNATION REQUESTED", "REDESIGNATION FROM", "REDESIGNATION TO GELAC", "REDESIGNATION FROM PRIMARY", "REDESIGNATION REQUESTED", "REDESIGNATION TO GENERAL", "REDESIGNATION FROM GENERAL", "REDESIGNATION TO PRIMARY DEBT.” We keep the data on refunds ("redesignation from primary; refund to be issued") because they provide insight into the total amount given by each individual. As for the reattribution categories, "reattribution from spouse" represents net money to the candidate, and hence must be included. 
+
+***PRELIMINARY ANALYSIS***
+
+With a cleaner dataset, I began my analysis by testing several simple assumptions about the balance of contributions in Silicon Valley. These assumptions are based on preconceived notions of the Bay Area political spectrum, touched on briefly above. Tables on the totals and contribution frequency to Republicans and Democrats in each election cycle enable a test of these assumptions, and also reveals several other observations. 
+
+***1. Democrats received more than Republicans in 2008.***
+
+True - Democrats received more funding ($15,128,520) than Republicans ($3,515,492) from these zipcodes in the 2008 cycle.
+
+***2. Democrats received more than Republicans in 2012.***
+
+True - the table above shows that this assumption also holds, with Dems receiving $9,176,345 and Reps receiving $4,826,055 - although notably the discrepency between Democratic and Republican fundraising is much smaller. The gap's shrinkage appears to be primarily due to a 40% fall in funding to Democrats, and a 37% rise in funding to Republicans. The drop in funding to Democrats is likely related to the lack of a CA primary for the party in 2012. 
+
+***3. Democrats have so far received more than Republicans in 2016.***
+
+True - So far in the 2016 cycle, Democrats have so far received $7,436,529 while Republicans have received just $2,311,534.
+
+***4. There are more contributions to Democrats than Republicans in each cycle.***
+
+True - as the above table shows, Democratic contributions reached 49,956 in 2008 versus 6,919 for Republicans. For 2012, Democrats received 50,633 contributions while Republicans received 8,807. For 2016, Democrats received 42,471 contributions while Republicans received 8,247. Admittedly, these numbers do not take repeat observations into consideration - in some cases, the reattributions cause certain contributors to be listed twice. While these do not affect the contribution sums, since the negative values act as a balance, they do interfere with an accurate gauge of contribution frequency. But regardless, the observation totals show Democrats have received far more individual contributions than Republicans in past cycles.
+
+*** 5. Contributions to both major parties hasn't reached the levels of 2008 or 2012.***
+As the above table makes clear, giving to Democrats is so far at just 43% and 67% of 2008 and 2012 levels, while that to Republicans are similarly at just 59%  and 41% of the sums from the two former cycles. 
+
+As the cycle-on-cycle comparison illustrates, the timeline of giving may be a factor when comparing sums of giving across cycles, as the 2016 cycle is not yet over. When examining giving totals by month, we find that some of the months with the highest levels of giving have not yet occured in the 2016 cycle. 
+For Democrats, the month of highest giving was September of the election year in both 2008 and 2012 - which has not yet occured in the 2016 cycle. For Republicans, the second-highest giving was in August of the election year in 2008 and the top three giving months were June, September, and October of the election year for the 2012 cycle - all of which are not represented in the 2016 data. 
+
+
+```{r, echo=FALSE}
+month_table<-aggregate(merge2$contb_receipt_amt, by=list(merge2$month, merge2$year, merge2$year_cycle, merge2$cand_party), FUN=sum)
+names(month_table)<-c("month", "year", "cycle", "party", "total_amt")
+
+```
+
+# Comparative Analysis: Prorating 2008
+
+To explore the role the timeline of giving may play in determining the magnitude and breakdown of contribution levels, we compare 2016 giving levels with the segment of 2008 giving that corresponds to the 2016 cycle to date. Comparing these two cycles provides the fairest comparison in the realm of recent presidential elections, since both follow an two-term presidency and therefore do not involve an incumbent. The earliest recorded contribution for 2016 from the Silicon Valley zipodes under analysis is July 25th, 2014 - slightly later than the first contribution recorded for the 2008 cycle, from April 12th, 2006. For the purposes of this analysis, the data for contributions related to the 2016 cycle goes up until May 31, 2016. This means that we have 677 days of contribution data for the 2016 cycle. In order to set up a fairer comparative analysis between the 2008 and 2016 cycles, we subset this segment of days from the total # for the 2008 cycle (995 days). This means that we restrict the data under examination for 2008 from April 12, 2006 to the date 677 days later,  February 18th, 2008.
+
+```{r, echo=FALSE, results='hide'}
+# Format the date column in Date form, so it is callable in the subset function below:
+merge2$date2<-as.Date(merge2$date, "%m/%d/%y")
+class(merge2$date2)
+
+# Subset the dataset (merge2) by full data for 2016 and the equivalent portion for 2008:
+proport0816<-merge2[merge2$date2<="2008-02-18" & merge2$year_cycle=="2008" | merge2$year_cycle=="2016",]
+
+# WriteCSV:
+write.csv(proport0816, file='proport0816.csv')
+
+# Sumtable for the subset data:
+p_sumtable<-aggregate(proport0816$contb_receipt_amt, by=list(proport0816$cand_party, proport0816$year_cycle), FUN=sum)
+names(p_sumtable)<-c("party", "cycle", "total_amt")
+
+```
+
+The comparable subsets of the data enable a fairer comparison of Republican giving across the 2008 to 2016 cycles. We already know that Democrats have so far received more than Republicans for the 2016 cycle, but we reexamine the contribution totals for the subset period of 2008. As the table shows, the assumption that Democrats received more than Republicans in 2008 holds true for the prorated subset of 2008 as well as for the full year - Democrats received $7,209,363 while Republicans received $2,604,544 in the first part of the cycle.
+
+### ANALYSIS:
+
+ZIPCODE-WIDE TRENDS:
+
+To get a better sense of the opportunities for increasing Republican funding, I attempt to answer the following questions about the comparable segments of 2008 and 2016 data.
+
+***1) Has funding to Republicans increased or decreased in 2016, relative to a similar point in the 2008 cycle?***
+As the table above shows, Republicans have so far captured a roughly equivalent level of funding ($2,322,685) as they had at a similar point in the 2016 cycle ($2,604,544). 
+
+***1) Has the number of Republican contributors in Silicon Valley increased from 2008 to 2016?***
+
+```{r, echo=FALSE}
+freqtable<-table(proport0816$year_cycle, proport0816$cand_party)
+```
+
+The table on contribution frequency for each party (R, D, L, G) shows that the number of Republican contributions in 2016 so far is nearly double that for a similar point in the cycle in 2008. While Silicon Valley data shows just 4,619 contributions to Republicans in the prorated segment of 2008, there have been 8,331 contributions recorded for 2016 so far. Admittedly, this is the total number of recorded contributions - including repeat contributions by the same individual. Attempting a gauge of individual contributions is messy business using FEC data, since some names are recorded differently across different cycles (for instance, with or without a "MR." or "MRS."). Further research is necessary to uniquely identify individual contributors, but a crude gauge in R (using the contbr_nm variable) shows roughly 2,246 unique individual contributors to Republicans in 2016 (8,331 total observations) and 2,441 individual contributors in 2008. The simultaneous rise in contributions and fall in unique contributions hints that the contribution frequency per individual has increased across the cycles - a similar number of individual contributors is responsible for nearly double the contributions in 2016 than they were for in 2008. 
+
+Since the sum of funding to Republicans has not changed cycle-on-cycle, the rise in contribution frequency suggests that the amount per contribution is declining. Examining contribution levels normalized by contribution frequency provides insights in this regard. In 2008, there were an average of 62 contributions recorded per Silicon Valley zipcode, with a max of 325, while in 2016 so far the average stands at 109.6, with a max of 419.
+
+``` {r, echo=FALSE, results='hide'} 
+# Table suming the amount given by each zipcode in a specific cycle
+amt_table<-aggregate(proport0816$contb_receipt_amt, by=list(proport0816$contbr_zip, proport0816$year_cycle, proport0816$cand_party), FUN=sum)
+names(amt_table)<-c("zip", "cycle", "party", "amt")
+
+# There are zipcode in which the sum contributions to Republicans by the cutoff in the 2008 cycle was zero, so I manually add the rows and set the total amount contributed to zero, in order to have an even number of observations for each zipcode in amt_table.
+# For 95139, the Republican contributions came after 2/18 in 2008. 
+# For 94088, the Republican contributions went McCain, beginning in May. 
+# For 94011, the Republican contributions in 2008 went to McCain beginning in September, and there are none recorded so far for 2016. 
+
+# Add rows in, with a zero for 2016.
+row_95139<-c("95139", "2008", "R", "0")
+row_94088<-c("94088", "2008", "R", "0")
+row_94011a<-c("94011", "2008", "R", "0")
+row_94011b<-c("94011", "2016", "R", "0")
+amt_table<-rbind(amt_table, row_95139, row_94088, row_94011a, row_94011b)
+amt_table$amt<-as.integer(amt_table$amt)
+unique(amt_table$amt)
+
+# Table counting the # of contributions from each zipcode to each party in each cycle
+count_table<-aggregate(proport0816$contbr_nm, by=list(proport0816$contbr_zip, proport0816$year_cycle, proport0816$cand_party), FUN=length)
+names(count_table)<-c("zip", "cycle", "party", "contributions")
+length(count_table$zip)
+# Add the missing rows in, with a zero for 2016.
+count_table<-rbind(count_table, row_95139, row_94088, row_94011a, row_94011b)
+count_table$contributions<-as.integer(count_table$contributions)
+unique(count_table$contributions)
+# Merge the above tables to get a full table showing the # of contributions and contribution sum from each zipcode to each party in each cycle:
+spread_table<-merge(amt_table, count_table, by=c("zip", "cycle", "party"))
+length(unique(spread_table$zip))
+
+# Add a column normalizing the contribution totals for each cycle-party-zip observation by the total number of contributions recorded for that zipcode. We have to account for the 95139 column, since both amt and contributions are zero, by creating an ifelse statement:
+spread_table$norm_cont<-ifelse(spread_table$amt==0 & spread_table$contributions==0, "0", spread_table$amt/spread_table$contributions)
+spread_table$norm_cont<-as.integer(spread_table$norm_cont)
+
+# Spread-Rep08:
+spread_08R<-spread_table[spread_table$party=="R" & spread_table$cycle=="2008",]
+# Spread-Rep16:
+spread_16R<-spread_table[spread_table$party=="R" & spread_table$cycle=="2016",]
+
+# SumStats:
+summary(spread_08R$contributions) # Rep 2008 contributions: mean 61.59, range (0,325)
+summary(spread_16R$contributions) # Rep 2016 contributions: mean 111.1, range (0, 419)
+
+```
+
+3) How has the average size of Republicans contributions changed from 2012 to 2016?
+
+Conducting summary statistics on contributions for the two cycle segments complicates the picture. We find that the average contribution for 2008 through mid-February of the election year was $563.9, with a mode of $100 and median of $200. For 2016 to date, the average contribution is far lower at $278.8 with a mode of $25 and median of $50. This indicates that while the number of Republican contributions has nearly doubled in 2016 since 2008, the amount each has contributed on average has fallen dramatically. The following graphs show the spread of contributions across zipcodes in each category, with the average for each cycle indicated by a horizontal line. 
+```{r, echo=FALSE, results='hide'}
+# Subsetting the dataset by contributions to Republicans:
+# Rep08 (proportion)
+rep08<-proport0816[proport0816$cand_party=="R" & proport0816$year_cycle=="2008",]
+# Rep16:
+rep16<-proport0816[proport0816$cand_party=="R" & proport0816$year_cycle=="2016",]
+
+## Write function for Mode:
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+# WE KNOW from spread_table above the following metrics:
+# Republican contributions in 2008:
+summary(rep08$contb_receipt_amt)
+sum(rep08$contb_receipt_amt)
+Mode(rep08$contb_receipt_amt)
+# sum = $2,604,544
+# average = $563.9
+# range = (-$4600, $4600)
+# median = $200
+# mode = $100
+
+# Republican contributions in 2016:
+sum(rep16$contb_receipt_amt)
+summary(rep16$contb_receipt_amt)
+Mode(rep16$contb_receipt_amt)
+# sum = $2,322,685
+# average = $278.8
+# range = (-$2700, $8100)
+# median = $50
+# mode = $25
+
+## BOX PLOTS:
+library(Rmisc)
+
+```
+
+```{r, echo=FALSE, warning=FALSE, error=FALSE}
+# Rep08 (proportion) - using rep08
+p08<-ggplot(rep08, aes(factor(contbr_zip), contb_receipt_amt)) 
+p08<-p08+geom_boxplot(fill = "grey80", colour = "#3366FF") + scale_y_continuous(limits=c(-4600,8100)) + ggtitle("Republicans, 2008") + geom_hline(aes(yintercept=563.9))
+range(rep08$contb_receipt_amt) #(-4600, 4600)
+
+# Rep16: full - using rep16
+p16<-ggplot(rep16, aes(factor(contbr_zip), contb_receipt_amt))
+p16<-p16+geom_boxplot(fill = "grey80", colour = "#3366FF") + scale_y_continuous(limits=c(-4600,8100))+ ggtitle("Republicans, 2016") + geom_hline(aes(yintercept=278.9))
+range(rep16$contb_receipt_amt) #(-2700, 8100)
+multiplot(p08, p16, cols=2)
+
+```
+
+ZIPCODE-LEVEL COMPARISONS:
+
+Having tested several basic assumptions about the breakdown of funding in the Silicon Valley area, I turn to an in-depth examination of funding patterns for the Republican party. To frame the analysis, I focus on the following questions:
+a) Normalized by the number of contributors, which zipcodes contributed the least to Republicans in each cycle?
+b)	Which zipcodes saw a decline in the number of contributions to Republicans from 2008 to 2012?
+c) Normalized by number of contributions, which zipcodes contributed less to Republicans in 2016 than in 2008?
+d)	For which zipcodes did total Republican funding RISE the most across 2008 to 2016?
+
+Before diving into these specific questions, several insights from initial examination of the table showing total contribution amounts from each zipcode to each party in each cycle (sumtable) are worth clarification.
+
+In one case (94302 in the 2016 cycle), the total sum given to a party is negative. A deeper dive reveals that this is due to a large refund ($2,600) from Marco Rubio to Mark Zuckerberg. There is no record of another contribution to Rubio in the data, so this is likely related to refusal to allow money directed toward a senate campaign to be transferred to Rubio's presential fund.  (http://www.inc.com/tess-townsend/tech-executives-2016-presidential-race.html). In fact, examining Zuckerberg's giving in depth reveals that he gave $2600 to the primary and $2600 to the general campaign of "Marco Rubio for Senate" in September 2013. As discussed before, a refund indicates *lack* of support for a candidate's presentatial run. While it may be simplest to limit analysis to positive amounts, this would provide an inflated contribution sum, since it would not consider refunds from over-giving (when campaign contribution limits were exceeded). (http://docquery.fec.gov/cgi-bin/fecimg/?13020434455, http://docquery.fec.gov/cgi-bin/fecimg/?13020434450)
+
+a) Normalized by the number of contributors, which zipcodes contributed the least to Republicans in each cycle?
+```{r, echo=FALSE, results='hide'}
+# The following table illustrates the mean contribution and number of contributions to each party, by zipcode and cycle:
+spread_table
+
+# Using the Republican-specific versions of the table, I identify the zipcodes that contributed at 1 standard deviation below the mean or lower.
+spread_08R
+spread_16R
+
+# BELOW 1-SD - REP08 NORM-CONT
+ave<-mean(spread_08R$norm_cont)
+sd<-sd(spread_08R$norm_cont)
+below_1sd<-spread_08R[spread_08R$norm_cont<=ave-sd,]
+unique((below_1sd$zip))
+ave(below_1sd$norm_cont)
+# "94011" "94064" "94088" "94089" "95111" "95116" "95119" "95121" "95122" "95139"
+
+# BELOW 1-SD - REP16 NORM-CONT
+ave<-mean(spread_16R$norm_cont)
+sd<-sd(spread_16R$norm_cont)
+below_1sd<-spread_16R[spread_16R$norm_cont<=ave-sd,]
+unique(below_1sd$zip)
+# 94302
+
+```
+
+Analysis shows that 2008 had many more zipcodes whose normalized contribution levels met this criterion, including zips "94064" "94088" "94089" "95111" "95116" "95119" "95121" "95122" "95139". The average normalized contribution level in this group was $70.1, versus a $440.8 for the group as a whole. In 2016, the only zipcode meeting this criterion was 94302, the area in which Republican contributions are so far negative (from the Zuckerberg refund).
+
+```{r, echo=FALSE, error=FALSE, results='hide'}
+#rep<-amt_table[amt_table$party=="R",]
+#table(rep$zip, rep$cycle)
+
+# Calculate the total amount given per zipcode, add it to column 'total_zip'
+#for (i in 1:length(sumtable$zip)){
+#zip_total<-sum(sumtable$amt[sumtable$cycle==sumtable$cycle[i] & sumtable$zip==sumtable$zip[i]])
+#sumtable$total_zip[i]<-zip_total
+#}
+
+# Create a column calculating the share that a specific party took of contributions for a given zipcode in a given election year. Add to variable 'share' in sumtable.
+#sumtable$share<-sumtable$amt/sumtable$total_zip
+#sumtable$share<-sumtable$share*100 # format as percentage
+```
+
+b)	Which zipcodes saw a decline in the number of contributions to Republicans from 2008 to 2012?
+
+Republican contributions have risen by 50 on average across the 75 zipcodes, with a standard deviation of 72. There are several zipcodes for which the number has fallen over a full standard deviation below the mean change, including: "94010" "94025" "94027" "94040" "94041" "94043" "94306". Within this group, the number of contributions has fallen by 46 across the cycles. 
+
+```{r, echo=FALSE, results='hide'}
+# To figure out the difference in # of contributions to Republicans for each zipcode across the two cycles, we create another column in our table.
+table(spread_table$party, spread_table$zip)
+length(unique(spread_table$zip[spread_table$party=="R"]))
+rep<-spread_table[spread_table$party=="R",]
+length(unique(rep$zip)) #75
+
+# Table of ContCHANGE-Zip
+table(rep$zip, rep$cycle)
+change_table<-data.frame()
+change_table<-as.data.frame(unique(rep$zip))
+names(change_table)<-c("zip")
+length(change_table$zip) #75
+for(i in 1:length(rep$zip)){
+  zip<-rep$zip[i]
+  rep$diff_cont[i]<-rep$contributions[rep$zip==zip & rep$cycle=="2016"]-rep$contributions[rep$zip==zip & rep$cycle=="2008"]
+}
+
+merged<-merge(change_table, rep, by="zip")
+merged<-merged[ c(TRUE,FALSE), ] 
+merged<-data.frame(merged$zip, merged$diff_cont)
+names(merged)<-c("zip", "diff_cont0816")
+
+cont_diff0816<-merged
+
+# Now that we have a table showing the difference in 2008 (prorated) and 2016 contributions to Republicans to date, we can determine in which ones contributions have fallen significantly across the two cycles.
+
+# BELOW-1SD
+ave<-mean(cont_diff0816$diff_cont0816)
+sd<-sd(cont_diff0816$diff_cont0816)
+below_1sd<-cont_diff0816[cont_diff0816$diff_cont0816<=ave-sd,]
+unique((below_1sd$zip))
+# "94010" "94025" "94027" "94040" "94041" "94043" "94306"
+
+ave<-mean(below_1sd$diff_cont0816)
+
+# Republican contributions have risen by 50 on average across the 75 zipcodes, with a standard deviation of 72. There are several zipcodes for which the number has fallen over a full standard deviation below the mean change, including: "94010" "94025" "94027" "94040" "94041" "94043" "94306". Within this group, the number of contributions has fallen by 46 across the cycles. 
+
+```
+
+c) Normalized by number of contributions, which zipcodes contributed less to Republicans in 2016 than in 2008?
+
+Funding to Republicans fell by an average of $378.12 per zipcode, from 2008 (prorated) to 2016 (to date). There are five zipcodes in which the change in funding across cycles reached a standard deviation under the average change, including 94010, 94025, 94027, 94070, and 94301. 
+
+94010: In the case of this Burlingame zipcode, we saw the normalized contribution fall from $735 to $543 for Republicans, as the total amount contributed to Republicans nearly halved while the number of contributions fell just 19%. Democrats saw an increase in contributions during the same period from 849 in 2008 (as of Feb '08) and 1236 so far in 2016. As the number of contribtors overall has risen just 27%, the zipcode appears to be growing more Democratic. 
+
+94025: Similarly, Republican contributions fell in this area while the number of Democratic contributions grew from 1096 to 1732. While Republicans received $184,928 in 2008 at this point in the cycle, they've received just $144,771 so far in 2016. 
+
+94027: In this case, both the number of Republican and Democratic contributions have fallen, but the normalized contribution has risen for Democrats while it's decreased for Republicans - from $1,270 to $958. Hence, it appears each Democratic contribution is getting larger on average, while that for Republicans is declining.
+
+94070: This zipcode shows a clear divergence in cycle-on-cycle contribution total trends for the two major parties. Democrats have seem a dramatic rise in overall funding ($93K to $144K), while Republicans have seen a major decline ($54,062 to $18,384). Digging deeper into the trends, we find interestingly that both parties have seen an increase in the number of contributions received, but those to Democrats has tripled while those to Republicans have doubled. Hence, the normalized contribution level for Republicans has fallen from $594 in 2008 to $99 in 2016. 
+
+94031: In this case, both Republican and Democratic funding have seen drop offs, while the number of contributions to candidates of each party likewise rose. Though certainly not substantial, there are 24 contributions recorded to the Green party in 2016, suggesting some individuals may be looking outside of the major parties in the current cycle.
+
+Hence, in some the cases in which Republican funding has shown a dramatic drop across the cycles under analysis, the trend appears accompanied by a rise in funding to Democrats. This suggests that either more Democrats are contributing, or each Democratic is giving more. To test whether there is an increase in cross-over contributions in any of these zipcodes, to test whether the opposing trends are due to multi-party contribution of certain individuals - as in, individuals who contributed to Republicans in 2008 moving to a Democratic contribution in 2016. TO DO - Cross-over analysis.
+
+```{r, echo=FALSE, results='hide'}
+spread_table
+spread_08R
+spread_16R
+
+rep<-spread_table[spread_table$party=="R",]
+length(unique(rep$zip)) #75
+
+# Table of ContCHANGE-Zip
+change_table<-data.frame()
+change_table<-as.data.frame(unique(rep$zip))
+names(change_table)<-c("zip")
+for(i in 1:length(rep$zip)){
+  zip<-rep$zip[i]
+  rep$diff_amt[i]<-rep$amt[rep$zip==zip & rep$cycle=="2016"]-rep$amt[rep$zip==zip & rep$cycle=="2008"]
+}
+
+merged<-merge(change_table, rep, by="zip")
+merged<-merged[ c(TRUE,FALSE), ] 
+merged<-data.frame(merged$zip, merged$diff_amt)
+names(merged)<-c("zip", "diff_amt0816")
+
+amt_diff0816<-merged
+
+# Now that we have a table showing the difference in 2008 (prorated) and 2016 sums to Republicans to date, we can determine in which ones the total contribution values have fallen significantly across the two cycles.
+
+# BELOW-1SD
+ave<-mean(amt_diff0816$diff_amt0816)
+sd<-sd(amt_diff0816$diff_amt0816)
+below_1sd<-amt_diff0816[amt_diff0816$diff_amt0816<=ave-sd,]
+unique((below_1sd$zip))
+# "94010" "94025" "94027" "94070" "94301"
+
+# Funding to Republicans fell by an average of $378.12 per zipcode, from 2008 (prorated) to 2016 (to date). There are five zipcodes in which the change in funding across cycles reached a standard deviation under the average change, including 94010, 94025, 94027, 94070, and 94301. 
+
+# 94010: In the case of this Burlingame zipcode, we saw the normalized contribution fall from $735 to $543 for Republicans, as the total amount contributed to Republicans nearly halved while the number of contributions fell just 19%. Democrats saw an increase in contributions during the same period from 849 in 2008 (as of Feb '08) and 1236 so far in 2016. As the number of contribtors overall has risen just 27%, the zipcode appears to be growing more Democratic. 
+spread_table[spread_table$zip=="94010",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94010",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+
+# 94025: Similarly, Republican contributions fell in this area while the number of Democratic contributions grew from 1096 to 1732. While Republicans received $184,928 in 2008 at this point in the cycle, they've received just $144,771 so far in 2016. 
+spread_table[spread_table$zip=="94025",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94025",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+
+# 94027: In this case, both the number of Republican and Democratic contributions have fallen, but the normalized contribution has risen for Democrats while it's decreased for Republicans - from $1,270 to $958. Hence, it appears each Democratic contribution is getting larger on average, while that for Republicans is declining.
+spread_table[spread_table$zip=="94027",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94027",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+
+# 94070: This zipcode shows a clear divergence in cycle-on-cycle contribution total trends for the two major parties. Democrats have seem a dramatic rise in overall funding ($93K to $144K), while Republicans have seen a major decline ($54,062 to $18,384). Digging deeper into the trends, we find interestingly that both parties have seen an increase in the number of contributions received, but those to Democrats has tripled while those to Republicans have doubled. Hence, the normalized contribution level for Republicans has fallen from $594 in 2008 to $99 in 2016. 
+spread_table[spread_table$zip=="94070",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94070",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+
+# 94031: In this case, both Republican and Democratic funding have seen drop offs, while the number of contributions to candidates of each party likewise rose. Though certainly not substantial, there are 24 contributions recorded to the Green party in 2016, suggesting some individuals may be looking outside of the major parties in the current cycle.
+spread_table[spread_table$zip=="94301",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94301",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+
+# Hence, in some the cases in which Republican funding has shown a dramatic drop across the cycles under analysis, the trend appears accompanied by a rise in funding to Democrats. This suggests that either more Democrats are contributing, or each Democratic is giving more. To test whether there is an increase in cross-over contributions in any of these zipcodes, to test whether the opposing trends are due to multi-party contribution of certain individuals - as in, individuals who contributed to Republicans in 2008 moving to a Democratic contribution in 2016.
+
+## TO DO:
+#[CROSS OVER, across years]
+#for (i in 1:length(proport0816$contbr_nm)){
+#  name<-proport0816$contbr_nm[i]
+#  sub<-proport0816[proport0816$contbr_nm==name,]
+#  p_count<-length(unique(sub$cand_party))
+#  proport0816$multiparty[i]<-ifelse(p_count>1, "YES", "NO")
+#}
+
+#for (i in 1:length(proport0816$contbr_nm)){
+#  name<-proport0816$contbr_nm[i]
+#  sub08<-proport0816[proport0816$contbr_nm==name & proport0816$year_cycle=="2008",]
+#  sub16<-proport0816[proport0816$contbr_nm==name & proport0816$year_cycle=="2016",]
+#  p_count08<-length(unique(sub08$cand_party))
+#  proport0816$multiparty08[i]<-ifelse(p_count08>1, "YES", "NO")
+#  p_count16<-length(unique(sub16$cand_party))
+#  proport0816$multiparty16[i]<-ifelse(p_count16>1, "YES", "NO")
+#}
+
+```
+
+d)	For which zipcodes did total Republican funding RISE the most across 2008 to 2016?
+
+94304: In the case of 94304, Republican contributions have risen roughly $15K while Democratic contributions have fallen by nearly the same amount across the two cycles. Interestingly, this appears due to a rise in average contribution size, as the number of Republican donors has so far declined to 47 from the 51 at a similar period in the 2008 cycle. Meanwhile, the number of Democrat-directed contributions has nearly doubled from 81 to 152. 
+
+94305: In this case, both Republican and Democratic contributions have risen, as have individual contributions. Democrats are overwhelmingly the majority of funding in the area, but Republican funding nearly tripled in the period while funding to Democrats has risen just 14%.
+
+95008: Republican contributions have tripled across the cycles, alongside a tripling in the number of contributions from 33 in 2008 to 152 in 2016. While Democratic contributions have roughly doubled. 
+
+95124: In this case, contributions to both Democratic and Republicans has risen, and we've seen a 5/6-fold increase in the number of contributions to Democrats/Republicans respectively. THis suggests increasing involvement in politics overall for the area, rather than a specific lean toward Republicans over Democrats. 
+
+
+```{r, echo=FALSE, results='hide'}
+# ABOVE-SD
+ave<-mean(amt_diff0816$diff_amt0816)
+sd<-sd(amt_diff0816$diff_amt0816)
+above_1sd<-amt_diff0816[amt_diff0816$diff_amt0816>=ave+sd,]
+unique((above_1sd$zip))
+# 94304, 94305, 95008, 95124
+
+# 94304: In the case of 94304, Republican contributions have risen roughly $15K while Democratic contributions have fallen by nearly the same amount across the two cycles. Interestingly, this appears due to a rise in average contribution size, as the number of Republican donors has so far declined to 47 from the 51 at a similar period in the 2008 cycle. Meanwhile, the number of Democrat-directed contributions has nearly doubled from 81 to 152. 
+spread_table[spread_table$zip=="94304",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94304",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+# 94305: In this case, both Republican and Democratic contributions have risen, as have individual contributions. Democrats are overwhelmingly the majority of funding in the area, but Republican funding nearly tripled in the period while funding to Democrats has risen just 14%.
+spread_table[spread_table$zip=="94305",]
+zip_tab<-proport0816[proport0816$contbr_zip=="94305",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+#View(proport0816[proport0816$contbr_zip=="94305",])
+# 95008: Republican contributions have tripled across the cycles, alongside a tripling in the number of contributions from 33 in 2008 to 152 in 2016. While Democratic contributions have roughly doubled. 
+spread_table[spread_table$zip=="95008",]
+zip_tab<-proport0816[proport0816$contbr_zip=="95008",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+# 95124: In this case, contributions to both Democratic and Republicans has risen, and we've seen a 5/6-fold increase in the number of contributions to Democrats/Republicans respectively. THis suggests increasing involvement in politics overall for the area, rather than a specific lean toward Republicans over Democrats. 
+spread_table[spread_table$zip=="95124",]
+zip_tab<-proport0816[proport0816$contbr_zip=="95124",]
+samp_table<-aggregate(zip_tab$contb_receipt_amt, by=list(zip_tab$contbr_zip, zip_tab$year_cycle, zip_tab$cand_party), FUN=sum)
+samp_table
+
+```
+
+APPENDIX:
+```{r, echo=FALSE}
+## Silicon Valley Zip Codes
+sv<-as.data.frame(sv)
+#[TABLE OF SV ZIPCODES IN DATASET].
+kable(sv, caption="Siliconv Valley Zip Codes")
+
+#[TABLE OF FULL RECIPIENTS, WITH YES/NO ABOUT WHETHER IN CAND_PARTY]. 
+kable(full_cand, caption="CA Contribution Recipients, 2008/2012/2016")
+
+#[TABLE ON YEARS & # OBS in FULL DATASET]
+kable(year_df, caption="Years Represented")
+
+#[TABLE ON C/Party Contribution Sums]
+kable(p_sumtable, caption="Contribution Sums by Party-Cycle")
+
+#[TABLE ON M/Y/C/Party Contribution Sums]
+kable(month_table, caption="Contribution Sums by Month-Year-Cycle-Party")
+
+# Table on contribution frequency:
+kable(freqtable, caption="Contribution Frequency by Party & Cycle")
+
+
+```
+```
