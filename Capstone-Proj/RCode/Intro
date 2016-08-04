@@ -1,1 +1,12 @@
-This file includes the R Markdown code that I used to produce the project.
+This file includes the R Markdown code that I used to produce the project, along with the data files necessary to run it. The individual 
+zipcode level files are not included, because they are downloadable from the FEC website and the data they contains is compiled in both 
+the output files.
+
+Inputs to R code:
+- List of Silicon Valley zipcodes [siliconvalley-zip.xlsx]
+- List of candidates participating in the CA primaries in each cycle [cand08,12,16.xlsx]
+- List of the party affiliations of each candidate who participated in the CA primaries [candPARTY.xlsx]
+
+Outputs from R code:
+- Dataset of contributions from the full 2008 and 2012 cycles, and the 2016 cycle through end of May [full_data.csv]
+- Dataset of contributions from the prorated segment of the 2008 cycle and the 2016 cycle through the end of May [proport0816.csv]
